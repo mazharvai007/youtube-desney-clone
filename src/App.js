@@ -1,9 +1,19 @@
 import './App.css';
+import { BrowserRouter as Router, Switch, Route } from 'react-router-dom';
+import Login from './Components/Login/Login';
+import Header from './Components/Header/Header';
 
 function App() {
 	return (
 		<div className='App'>
-			<h1>Starting to work with YouTube and Disney clone project</h1>
+			<Router>
+				<Header />
+				<Switch>
+					<Route exact path='/'>
+						<Login />
+					</Route>
+				</Switch>
+			</Router>
 		</div>
 	);
 }
