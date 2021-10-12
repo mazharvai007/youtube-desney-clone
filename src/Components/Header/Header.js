@@ -1,51 +1,118 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router';
 import { auth, provider } from '../../firebase';
+import {
+	selectUserName,
+	selectUserPhoto,
+	setSignOutState,
+	setUserLoginDetails,
+} from '../../features/user/userSlice';
 
 const Header = (props) => {
+	// Allow us to acess dispatch, history, username and user photo
+	const dispatch = useDispatch();
+	const history = useHistory();
+	const userName = useSelector(selectUserName);
+	const userPhoto = useSelector(selectUserPhoto);
+
+	// When username is updated then auth state will be changed
+	useEffect(() => {
+		auth.onAuthStateChanged(async (user) => {
+			if (user) {
+				setUser(user);
+				history.push('/home');
+			}
+		});
+	}, [userName]);
+
 	// Make authentication
 	const handleAuth = () => {
-		auth.signInWithPopup(provider)
-			.then((result) => {
-				console.log(result);
-			})
-			.catch((error) => {
-				console.log(error.message);
-			});
+		if (!userName) {
+			auth.signInWithPopup(provider)
+				.then((result) => {
+					setUser(result.user); // ger user information while loggin in
+				})
+				.catch((error) => {
+					console.log(error.message);
+				});
+		} else {
+			auth.signOut()
+				.then(() => {
+					dispatch(setSignOutState()); // When logging out, user information getting empty
+					history.push('/'); // While logging out, it is redirecting to home page
+				})
+				.catch((error) => alert(error.message));
+		}
 	};
+
+	/**
+	 * Set user login details
+	 * @param {*} user
+	 */
+	const setUser = (user) => {
+		dispatch(
+			setUserLoginDetails({
+				name: user.displayName,
+				email: user.email,
+				photo: user.photoURL,
+			})
+		);
+	};
+
+	console.log(userPhoto);
 
 	return (
 		<Nav>
 			<Logo>
 				<img src='/images/logo.svg' alt='Disney Clone' />
 			</Logo>
-			<NavMenu>
-				<a href='/home'>
-					<img src='/images/home-icon.svg' alt='Home' />
-					<span>Home</span>
-				</a>
-				<a href='/search'>
-					<img src='/images/search-icon.svg' alt='Search' />
-					<span>Search</span>
-				</a>
-				<a href='/watchlist'>
-					<img src='/images/watchlist-icon.svg' alt='Watchlist' />
-					<span>Watchlist</span>
-				</a>
-				<a href='/originals'>
-					<img src='/images/original-icon.svg' alt='Orginals' />
-					<span>Orginals</span>
-				</a>
-				<a href='/movies'>
-					<img src='/images/movie-icon.svg' alt='Movies' />
-					<span>Movies</span>
-				</a>
-				<a href='/series'>
-					<img src='/images/series-icon.svg' alt='Series' />
-					<span>Series</span>
-				</a>
-			</NavMenu>
-			<Login onClick={handleAuth}>Login</Login>
+
+			{!userName ? (
+				<Login onClick={handleAuth}>Login</Login>
+			) : (
+				<>
+					<NavMenu>
+						<a href='/home'>
+							<img src='/images/home-icon.svg' alt='Home' />
+							<span>Home</span>
+						</a>
+						<a href='/search'>
+							<img src='/images/search-icon.svg' alt='Search' />
+							<span>Search</span>
+						</a>
+						<a href='/watchlist'>
+							<img
+								src='/images/watchlist-icon.svg'
+								alt='Watchlist'
+							/>
+							<span>Watchlist</span>
+						</a>
+						<a href='/originals'>
+							<img
+								src='/images/original-icon.svg'
+								alt='Orginals'
+							/>
+							<span>Orginals</span>
+						</a>
+						<a href='/movies'>
+							<img src='/images/movie-icon.svg' alt='Movies' />
+							<span>Movies</span>
+						</a>
+						<a href='/series'>
+							<img src='/images/series-icon.svg' alt='Series' />
+							<span>Series</span>
+						</a>
+					</NavMenu>
+					<SignOut>
+						<UserImg src={userPhoto} alt={userName} />
+						<DropDown>
+							<span onClick={handleAuth}>Sign Out</span>
+						</DropDown>
+					</SignOut>
+				</>
+			)}
 		</Nav>
 	);
 };
@@ -158,6 +225,51 @@ const Login = styled.a`
 		background-color: #f9f9f9;
 		color: #000;
 		border-color: transparent;
+	}
+`;
+
+const UserImg = styled.img`
+	height: 100%;
+`;
+
+const DropDown = styled.div`
+	position: absolute;
+	top: 48px;
+	right: 0px;
+	background: rgb(19, 19, 19);
+	border: 1px solid rgba(151, 151, 151, 0.34);
+	border-radius: 4px;
+	box-shadow: rgb(0 0 0 / 50%) 0px 0px 18px 0px;
+	padding: 10px;
+	font-size: 14px;
+	letter-spacing: 3px;
+	width: 130px;
+	text-align: center;
+	opacity: 0;
+	display: none;
+`;
+
+const SignOut = styled.div`
+	position: relative;
+	height: 48px;
+	width: 48px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+
+	${UserImg} {
+		border-radius: 50%;
+		width: 100%;
+		height: 100%;
+	}
+
+	&:hover {
+		${DropDown} {
+			display: block;
+			opacity: 1;
+			transition-duration: 1s;
+		}
 	}
 `;
 
