@@ -1,8 +1,13 @@
 import React from 'react';
 import styled from 'styled-components';
+import ImageSlider from '../ImageSlider/ImageSlider';
 
 function Home() {
-	return <Container>Home</Container>;
+	return (
+		<Container>
+			<ImageSlider />
+		</Container>
+	);
 }
 
 const Container = styled.main`
